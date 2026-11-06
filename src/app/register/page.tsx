@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import RegisterForm from "@/components/forms/RegisterForm";
 import { getCurrentUser } from "@/lib/auth/dal";
 
-export default async function RegisterPage() {
+async function RegisterContent() {
   const user = await getCurrentUser();
 
   if (user) {
@@ -37,5 +38,19 @@ export default async function RegisterPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+          <p className="text-sm text-gray-600">Loading registration page...</p>
+        </main>
+      }
+    >
+      <RegisterContent />
+    </Suspense>
   );
 }

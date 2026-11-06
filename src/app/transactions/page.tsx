@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-
+import TransactionPagination from "@/components/dashboard/TransactionPagination";
 import { requireUser } from "@/lib/auth/dal";
 import {
   getTransactions,
@@ -15,6 +15,7 @@ type TransactionsPageProps = {
     categoryId?: string;
     month?: string;
     type?: string;
+    page?: string;
   }>;
 };
 
@@ -37,13 +38,23 @@ async function TransactionsContent({ searchParams }: TransactionsPageProps) {
   const type =
     params.type === "income" || params.type === "expense" ? params.type : "all";
 
+  // Read the requested page number.
+  const requestedPage =
+    params.page && /^\d+$/.test(params.page)
+      ? Math.max(1, Number(params.page))
+      : 1;
+
   // Fetch transactions and categories together.
-  const [transactions, categories] = await Promise.all([
-    getTransactions(user.id, {
-      categoryId,
-      month,
-      type,
-    }),
+  const [transactionData, categories] = await Promise.all([
+    getTransactions(
+      user.id,
+      {
+        categoryId,
+        month,
+        type,
+      },
+      requestedPage,
+    ),
     getTransactionCategories(user.id),
   ]);
 
@@ -69,8 +80,19 @@ async function TransactionsContent({ searchParams }: TransactionsPageProps) {
               type,
             }}
           />
+          <TransactionsTable transactions={transactionData.transactions} />
 
-          <TransactionsTable transactions={transactions} />
+          <TransactionPagination
+            currentPage={transactionData.currentPage}
+            totalPages={transactionData.totalPages}
+            totalCount={transactionData.totalCount}
+            pageSize={transactionData.pageSize}
+            currentFilters={{
+              categoryId,
+              month: params.month,
+              type,
+            }}
+          />
         </div>
       </main>
     </div>
